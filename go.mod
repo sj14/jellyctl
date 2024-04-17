@@ -1,0 +1,14 @@
+module github.com/sj14/jellyctl
+
+go 1.22.2
+
+require (
+	github.com/sj14/jellyfin-go v0.0.0-20240417141508-99ccc56e75dd
+	github.com/urfave/cli/v2 v2.27.2
+)
+
+require (
+	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
+)
