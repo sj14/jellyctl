@@ -45,3 +45,5 @@ GLOBAL OPTIONS:
    --token value  API token [$JELLYCTL_TOKEN]
    --help, -h     show help
 ```
+
+Generate an API token in the Jellyfin WebUI at Administration -> Overview -> Advanced -> API Token.
