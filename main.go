@@ -114,6 +114,21 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "library",
+				Usage: "Manage the media libraries",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "scan",
+						Usage: "Trigger a rescan of all libraries",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+								return ctrl.LibraryScan()
+							})
+						},
+					},
+				},
+			},
 		},
 	}
 

@@ -23,6 +23,7 @@ COMMANDS:
    activity  List activities
    system    Show system information
    user      Manage users
+   library   Manage the media libraries
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
