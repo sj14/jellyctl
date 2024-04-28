@@ -4,7 +4,21 @@ A CLI for managing your Jellyfin server.
 
 ## Installation
 
-Currently, installation is only possible via `go install`:
+### Precompiled Binaries
+
+Binaries are available for all major platforms. See the [releases](https://github.com/sj14/jellyctl/releases) page.
+
+### Homebrew
+
+Using the [Homebrew](https://brew.sh/) package manager for macOS:
+
+``` text
+brew install sj14/tap/jellyctl
+```
+
+### Manually
+
+It's also possible to install via `go install`:
 
 ```console
 go install github.com/sj14/jellyctl@latest
