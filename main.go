@@ -13,10 +13,18 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var (
+	// will be replaced during the build process
+	version = "undefined"
+	// commit  = "undefined"
+	// date    = "undefined"
+)
+
 func main() {
 	app := &cli.App{
 		Name:                 "jellyctl",
 		Usage:                "Manage Jellyfin from the CLI",
+		Version:              version,
 		Suggest:              true,
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
