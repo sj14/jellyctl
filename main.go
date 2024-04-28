@@ -78,6 +78,15 @@ func main() {
 				Usage: "Manage system",
 				Subcommands: []*cli.Command{
 					{
+						Name:  "shutdown",
+						Usage: "Stop the Jellyfin process",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+								return ctrl.SystemShutdown()
+							})
+						},
+					},
+					{
 						Name:  "restart",
 						Usage: "Restart the Jellyfin process",
 						Action: func(ctx *cli.Context) error {
