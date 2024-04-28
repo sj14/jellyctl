@@ -76,10 +76,22 @@ func main() {
 			{
 				Name:  "system",
 				Usage: "Show system information",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "public",
+						Usage: "show public info which won't need a token",
+					},
+				},
 				Action: func(ctx *cli.Context) error {
-					return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
-						return ctrl.GetPublicSystemInfo()
-					})
+					if ctx.Bool("public") {
+						return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return ctrl.GetPublicSystemInfo()
+						})
+					} else {
+						return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return ctrl.GetSystemInfo()
+						})
+					}
 				},
 			},
 			{
