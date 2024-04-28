@@ -75,23 +75,38 @@ func main() {
 			},
 			{
 				Name:  "system",
-				Usage: "Show system information",
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:  "public",
-						Usage: "show public info which won't need a token",
+				Usage: "Manage system",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "restart",
+						Usage: "Restart the Jellyfin process",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+								return ctrl.SystemRestart()
+							})
+						},
 					},
-				},
-				Action: func(ctx *cli.Context) error {
-					if ctx.Bool("public") {
-						return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
-							return ctrl.GetPublicSystemInfo()
-						})
-					} else {
-						return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
-							return ctrl.GetSystemInfo()
-						})
-					}
+					{
+						Name:  "info",
+						Usage: "Shows system information",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "public",
+								Usage: "show public info which won't need a token",
+							},
+						},
+						Action: func(ctx *cli.Context) error {
+							if ctx.Bool("public") {
+								return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+									return ctrl.GetPublicSystemInfo()
+								})
+							} else {
+								return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+									return ctrl.GetSystemInfo()
+								})
+							}
+						},
+					},
 				},
 			},
 			{
@@ -125,7 +140,7 @@ func main() {
 					},
 					{
 						Name:  "list",
-						Usage: "Show users",
+						Usage: "Shows users",
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
 								return ctrl.UserList()
@@ -136,7 +151,7 @@ func main() {
 			},
 			{
 				Name:  "library",
-				Usage: "Manage the media libraries",
+				Usage: "Manage media libraries",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "scan",

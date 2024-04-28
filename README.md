@@ -33,17 +33,21 @@ NAME:
 USAGE:
    jellyctl [global options] command [command options] 
 
+VERSION:
+   undefined
+
 COMMANDS:
    activity  List activities
-   system    Show system information
+   system    Manage system
    user      Manage users
-   library   Manage the media libraries
+   library   Manage media libraries
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --url value    URL of the Jellyfin server (default: "http://127.0.0.1:8096") [$JELLYCTL_URL]
    --token value  API token [$JELLYCTL_TOKEN]
    --help, -h     show help
+   --version, -v  print the version
 ```
 
 Generate an API token in the Jellyfin WebUI at Administration -> Overview -> Advanced -> API Token.
