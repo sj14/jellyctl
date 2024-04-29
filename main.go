@@ -75,7 +75,7 @@ func main() {
 			},
 			{
 				Name:  "system",
-				Usage: "Manage system",
+				Usage: "Manage the system",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "shutdown",
@@ -168,6 +168,42 @@ func main() {
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
 								return ctrl.LibraryScan()
+							})
+						},
+					},
+					{
+						Name:  "unscraped",
+						Usage: "List entries which were not scraped",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "movies",
+								Value: true,
+								Usage: "show unscraped movies",
+							},
+							&cli.BoolFlag{
+								Name:  "shows",
+								Value: true,
+								Usage: "show unscraped shows",
+							},
+							&cli.BoolFlag{
+								Name:  "seasons",
+								Value: false,
+								Usage: "show unscraped seasons",
+							},
+							&cli.BoolFlag{
+								Name:  "episodes",
+								Value: false,
+								Usage: "show unscraped episodes",
+							},
+						},
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+								return ctrl.LibraryUnscraped(
+									ctx.Bool("movies"),
+									ctx.Bool("shows"),
+									ctx.Bool("seasons"),
+									ctx.Bool("episodes"),
+								)
 							})
 						},
 					},
