@@ -34,16 +34,14 @@ func (c *Controller) UserList() (*http.Response, error) {
 		return resp, err
 	}
 
-	fmt.Printf("ID\t\t\t\t\tAdmin\tHidden\tDisabled\tLast Active\tName\n")
-	fmt.Println("-----------------------------------|----------|-------|-------|---------------------|------")
+	fmt.Printf("ID                                Admin   Disabled   Last Active       Name\n")
+	fmt.Printf("---------------------------------|-------|------|---------------------|------\n")
 	for _, user := range users {
-		fmt.Printf("%s\t%t\t%t\t%t\t%s\t%s\n",
+		fmt.Printf("%s  %t\t  %t\t  %s  %s\n",
 			user.GetId(),
 			user.Policy.Get().GetIsAdministrator(),
-			user.Policy.Get().GetIsHidden(),
 			user.Policy.Get().GetIsDisabled(),
 			user.GetLastActivityDate().Local().Format(time.DateTime),
-			//time.Since(user.GetLastActivityDate()).Round(1*time.Minute),
 			user.GetName(),
 		)
 	}
