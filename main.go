@@ -39,6 +39,17 @@ func main() {
 				EnvVars: []string{"JELLYCTL_TOKEN"},
 				Usage:   "API token",
 			},
+			&cli.BoolFlag{
+				Name:   "docs",
+				Hidden: true,
+				Action: func(ctx *cli.Context, b bool) error {
+					s, err := ctx.App.ToMarkdown()
+					if err != nil {
+						return err
+					}
+					return os.WriteFile("DOCS.md", []byte(s), os.ModePerm)
+				},
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -276,7 +287,7 @@ func main() {
 			},
 			{
 				Name:  "key",
-				Usage: "Manage API tokens",
+				Usage: "Manage API keys",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "list",
