@@ -52,3 +52,84 @@ GLOBAL OPTIONS:
 ```
 
 Generate an API token in the Jellyfin WebUI at Administration -> Overview -> Advanced -> API Token.
+
+### System
+
+```
+NAME:
+   jellyctl system - Manage the system
+
+USAGE:
+   jellyctl system command [command options] 
+
+COMMANDS:
+   shutdown  Stop the Jellyfin process
+   restart   Restart the Jellyfin process
+   info      Shows system information
+   help, h   Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+### User
+
+```
+NAME:
+   jellyctl user - Manage users
+
+USAGE:
+   jellyctl user command [command options] 
+
+COMMANDS:
+   create        Add a user
+   delete        Remove a user
+   enable        Enable a user
+   disable       Disable a user
+   set-admin     Promote admin privileges
+   unset-admin   Revoke admin privileges
+   set-hidden    Hide user from login page
+   unset-hidden  Expose user on login page
+   list          Shows users
+   help, h       Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+### Library
+
+```
+NAME:
+   jellyctl library - Manage media libraries
+
+USAGE:
+   jellyctl library command [command options] 
+
+COMMANDS:
+   scan       Trigger a rescan of all libraries
+   unscraped  List entries which were not scraped
+   help, h    Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+### Key
+
+```
+NAME:
+   jellyctl key - Manage API tokens
+
+USAGE:
+   jellyctl key command [command options] 
+
+COMMANDS:
+   list     Show keys
+   create   Add a new key
+   delete   Remove a key
+   help, h  Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```

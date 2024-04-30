@@ -170,7 +170,7 @@ func main() {
 					},
 					{
 						Name:      "set-admin",
-						Usage:     "Protmote admin privileges",
+						Usage:     "Promote admin privileges",
 						Args:      true,
 						ArgsUsage: " <ID>",
 						Action: func(ctx *cli.Context) error {
