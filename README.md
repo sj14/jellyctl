@@ -38,9 +38,10 @@ VERSION:
 
 COMMANDS:
    activity  List activities
-   system    Manage system
+   system    Manage the system
    user      Manage users
    library   Manage media libraries
+   key       Manage API tokens
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:

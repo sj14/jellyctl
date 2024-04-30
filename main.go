@@ -274,6 +274,43 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "key",
+				Usage: "Manage API tokens",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "list",
+						Usage: "Show keys",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.KeyList()
+							})
+						},
+					},
+					{
+						Name:      "create",
+						Usage:     "Add a new key",
+						Args:      true,
+						ArgsUsage: " <NAME>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.KeyCreate(ctx.Args().Get(0))
+							})
+						},
+					},
+					{
+						Name:      "delete",
+						Usage:     "Remove a key",
+						Args:      true,
+						ArgsUsage: " <TOKEN>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.KeyDelete(ctx.Args().Get(0))
+							})
+						},
+					},
+				},
+			},
 		},
 	}
 
