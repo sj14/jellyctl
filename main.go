@@ -169,6 +169,50 @@ func main() {
 						},
 					},
 					{
+						Name:      "set-admin",
+						Usage:     "Protmote admin privileges",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.UserSetAdmin(ctx.Args().Get(0))
+							})
+						},
+					},
+					{
+						Name:      "unset-admin",
+						Usage:     "Revoke admin privileges",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.UserUnsetAdmin(ctx.Args().Get(0))
+							})
+						},
+					},
+					{
+						Name:      "set-hidden",
+						Usage:     "Hide user from login page",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.UserSetHidden(ctx.Args().Get(0))
+							})
+						},
+					},
+					{
+						Name:      "unset-hidden",
+						Usage:     "Expose user on login page",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.UserUnsetHidden(ctx.Args().Get(0))
+							})
+						},
+					},
+					{
 						Name:  "list",
 						Usage: "Shows users",
 						Action: func(ctx *cli.Context) error {

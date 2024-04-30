@@ -93,3 +93,43 @@ func (c *Controller) UserDisable(userID string) error {
 	policy.IsDisabled = pointer(true)
 	return c.userUpdatePolicy(userID, api.UserPolicy(*policy))
 }
+
+func (c *Controller) UserSetAdmin(userID string) error {
+	policy, err := c.UserPolicy(userID)
+	if err != nil {
+		return err
+	}
+
+	policy.IsAdministrator = pointer(true)
+	return c.userUpdatePolicy(userID, api.UserPolicy(*policy))
+}
+
+func (c *Controller) UserUnsetAdmin(userID string) error {
+	policy, err := c.UserPolicy(userID)
+	if err != nil {
+		return err
+	}
+
+	policy.IsAdministrator = pointer(false)
+	return c.userUpdatePolicy(userID, api.UserPolicy(*policy))
+}
+
+func (c *Controller) UserSetHidden(userID string) error {
+	policy, err := c.UserPolicy(userID)
+	if err != nil {
+		return err
+	}
+
+	policy.IsHidden = pointer(true)
+	return c.userUpdatePolicy(userID, api.UserPolicy(*policy))
+}
+
+func (c *Controller) UserUnsetHidden(userID string) error {
+	policy, err := c.UserPolicy(userID)
+	if err != nil {
+		return err
+	}
+
+	policy.IsHidden = pointer(false)
+	return c.userUpdatePolicy(userID, api.UserPolicy(*policy))
+}
