@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strings"
 
 	jellyapi "github.com/sj14/jellyfin-go/api"
 )
@@ -27,16 +26,13 @@ func pointer[T any](v T) *T {
 	return &v
 }
 
-func printStruct(v any) {
-	j, err := json.MarshalIndent(v, "", "")
+func printAsJSON(v any) {
+	j, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	output := strings.ReplaceAll(string(j), "\"", "")
-	output = strings.Trim(output, "{}")
-	output = strings.TrimSpace(output)
-	fmt.Println(output)
+	fmt.Println(string(j))
 }
 
 // Set all fields which are nil to the zero value.

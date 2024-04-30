@@ -6,7 +6,7 @@ func (c *Controller) GetSystemInfo() error {
 		return err
 	}
 
-	printStruct(result)
+	printAsJSON(result)
 	return err
 }
 
@@ -16,7 +16,7 @@ func (c *Controller) GetPublicSystemInfo() error {
 		return err
 	}
 
-	printStruct(result)
+	printAsJSON(result)
 	return err
 }
 
