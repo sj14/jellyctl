@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
-	"github.com/sj14/jellyctl/pkg"
+	"github.com/sj14/jellyctl/controller"
 	jellyapi "github.com/sj14/jellyfin-go/api"
 	"github.com/urfave/cli/v2"
 )
@@ -64,7 +63,7 @@ func main() {
 					},
 				},
 				Action: func(ctx *cli.Context) error {
-					return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+					return Exec(ctx, func(ctrl *controller.Controller) error {
 						return ctrl.GetLogEntries(
 							int32(ctx.Int("start")),
 							int32(ctx.Int("limit")),
@@ -81,7 +80,7 @@ func main() {
 						Name:  "shutdown",
 						Usage: "Stop the Jellyfin process",
 						Action: func(ctx *cli.Context) error {
-							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.SystemShutdown()
 							})
 						},
@@ -90,7 +89,7 @@ func main() {
 						Name:  "restart",
 						Usage: "Restart the Jellyfin process",
 						Action: func(ctx *cli.Context) error {
-							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.SystemRestart()
 							})
 						},
@@ -106,11 +105,11 @@ func main() {
 						},
 						Action: func(ctx *cli.Context) error {
 							if ctx.Bool("public") {
-								return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+								return Exec(ctx, func(ctrl *controller.Controller) error {
 									return ctrl.GetPublicSystemInfo()
 								})
 							} else {
-								return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+								return Exec(ctx, func(ctrl *controller.Controller) error {
 									return ctrl.GetSystemInfo()
 								})
 							}
@@ -128,7 +127,7 @@ func main() {
 						Args:      true,
 						ArgsUsage: " <NAME> <PASSWORD>",
 						Action: func(ctx *cli.Context) error {
-							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.UserAdd(
 									ctx.Args().Get(0),
 									ctx.Args().Get(1),
@@ -142,8 +141,30 @@ func main() {
 						Args:      true,
 						ArgsUsage: " <ID>",
 						Action: func(ctx *cli.Context) error {
-							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.UserDel(ctx.Args().Get(0))
+							})
+						},
+					},
+					{
+						Name:      "enable",
+						Usage:     "Enable a user",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.UserEnable(ctx.Args().Get(0))
+							})
+						},
+					},
+					{
+						Name:      "disable",
+						Usage:     "Disable a user",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.UserDisable(ctx.Args().Get(0))
 							})
 						},
 					},
@@ -151,7 +172,7 @@ func main() {
 						Name:  "list",
 						Usage: "Shows users",
 						Action: func(ctx *cli.Context) error {
-							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.UserList()
 							})
 						},
@@ -166,7 +187,7 @@ func main() {
 						Name:  "scan",
 						Usage: "Trigger a rescan of all libraries",
 						Action: func(ctx *cli.Context) error {
-							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.LibraryScan()
 							})
 						},
@@ -197,7 +218,7 @@ func main() {
 							},
 						},
 						Action: func(ctx *cli.Context) error {
-							return Exec(ctx, func(ctrl *pkg.Controller) (*http.Response, error) {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.LibraryUnscraped(
 									ctx.Bool("movies"),
 									ctx.Bool("shows"),
@@ -217,17 +238,13 @@ func main() {
 	}
 }
 
-func Exec(ctx *cli.Context, fn func(ctrl *pkg.Controller) (*http.Response, error)) error {
+func Exec(ctx *cli.Context, fn func(ctrl *controller.Controller) error) error {
 	config := &jellyapi.Configuration{
 		Servers:       jellyapi.ServerConfigurations{{URL: ctx.String("url")}},
 		DefaultHeader: map[string]string{"Authorization": fmt.Sprintf("MediaBrowser Token=\"%s\"", ctx.String("token"))},
 	}
 	client := jellyapi.NewAPIClient(config)
 
-	ctrl := pkg.NewController(context.Background(), client)
-	_, err := fn(ctrl)
-	// if err != nil {
-	// 	log.Printf("%#v\n", resp)
-	// }
-	return err
+	ctrl := controller.New(context.Background(), client)
+	return fn(ctrl)
 }

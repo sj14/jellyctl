@@ -1,17 +1,17 @@
-package pkg
+package controller
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/sj14/jellyfin-go/api"
 )
 
-func (c *Controller) LibraryScan() (*http.Response, error) {
-	return c.client.LibraryAPI.RefreshLibrary(c.ctx).Execute()
+func (c *Controller) LibraryScan() error {
+	_, err := c.client.LibraryAPI.RefreshLibrary(c.ctx).Execute()
+	return err
 }
 
-func (c *Controller) LibraryUnscraped(movies, series, season, episode bool) (*http.Response, error) {
+func (c *Controller) LibraryUnscraped(movies, series, season, episode bool) error {
 	// Determine based on missing production date
 	// TODO: look for a better endpoints/approach.
 
@@ -29,13 +29,13 @@ func (c *Controller) LibraryUnscraped(movies, series, season, episode bool) (*ht
 		types = append(types, api.BASEITEMKIND_EPISODE)
 	}
 
-	result, resp, err := c.client.ItemsAPI.GetItems(c.ctx).
+	result, _, err := c.client.ItemsAPI.GetItems(c.ctx).
 		Recursive(true).
 		IncludeItemTypes(types).
 		Filters([]api.ItemFilter{api.ITEMFILTER_IS_NOT_FOLDER}).
 		Execute()
 	if err != nil {
-		return resp, err
+		return err
 	}
 
 	for _, item := range result.Items {
@@ -43,5 +43,5 @@ func (c *Controller) LibraryUnscraped(movies, series, season, episode bool) (*ht
 			fmt.Printf("(%s) %s\n", item.GetType(), item.GetName())
 		}
 	}
-	return resp, err
+	return err
 }
