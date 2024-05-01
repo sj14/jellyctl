@@ -35,7 +35,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:    "token",
-				Value:   "",
+				Value:   " ", // https://github.com/urfave/cli/issues/1902
 				EnvVars: []string{"JELLYCTL_TOKEN"},
 				Usage:   "API token",
 			},

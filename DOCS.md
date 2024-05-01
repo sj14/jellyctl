@@ -23,7 +23,7 @@ jellyctl [GLOBAL OPTIONS] command [COMMAND OPTIONS] [ARGUMENTS...]
 
 **--help, -h**: show help
 
-**--token**="": API token (default: 82073e8e9239430fb728c0e40131f03b)
+**--token**="": API token (default: " ")
 
 **--url**="": URL of the Jellyfin server (default: "http://127.0.0.1:8096")
 

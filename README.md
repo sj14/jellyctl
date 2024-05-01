@@ -26,7 +26,7 @@ go install github.com/sj14/jellyctl@latest
 
 ## Usage
 
-See the generated [DOCS](/DOCS.md) for more details.
+See the generated [DOCS.md](/DOCS.md) for more details.
 
 ```
 NAME:
