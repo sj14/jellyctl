@@ -112,25 +112,13 @@ Trigger a rescan of all libraries
 
 List entries which were not scraped
 
-**--episodes**: show unscraped episodes
-
-**--movies**: show unscraped movies
-
-**--seasons**: show unscraped seasons
-
-**--shows**: show unscraped shows
+**--types**="": filter media types (default: "Movie", "Series")
 
 ### search
 
 Search throught the library
 
-**--episodes**: show unscraped episodes
-
-**--movies**: show unscraped movies
-
-**--seasons**: show unscraped seasons
-
-**--shows**: show unscraped shows
+**--types**="": filter media types (default: "Movie", "Series")
 
 ## key
 

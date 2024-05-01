@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/sj14/jellyctl/controller"
-	jellyapi "github.com/sj14/jellyfin-go/api"
+	"github.com/sj14/jellyfin-go/api"
 	"github.com/urfave/cli/v2"
 )
 
@@ -250,14 +250,13 @@ func main() {
 					{
 						Name:  "unscraped",
 						Usage: "List entries which were not scraped",
-						Flags: itemTypesFlags,
+						Flags: []cli.Flag{
+							itemTypesFlag,
+						},
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.LibraryUnscraped(
-									ctx.Bool("movies"),
-									ctx.Bool("shows"),
-									ctx.Bool("seasons"),
-									ctx.Bool("episodes"),
+									ctx.StringSlice("types"),
 								)
 							})
 						},
@@ -267,15 +266,14 @@ func main() {
 						Usage:     "Search throught the library",
 						Args:      true,
 						ArgsUsage: " <TERM>",
-						Flags:     itemTypesFlags,
+						Flags: []cli.Flag{
+							itemTypesFlag,
+						},
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.LibrarySearch(
 									ctx.Args().Get(0),
-									ctx.Bool("movies"),
-									ctx.Bool("shows"),
-									ctx.Bool("seasons"),
-									ctx.Bool("episodes"),
+									ctx.StringSlice("types"),
 								)
 							})
 						},
@@ -328,35 +326,31 @@ func main() {
 }
 
 func Exec(ctx *cli.Context, fn func(ctrl *controller.Controller) error) error {
-	config := &jellyapi.Configuration{
-		Servers:       jellyapi.ServerConfigurations{{URL: ctx.String("url")}},
-		DefaultHeader: map[string]string{"Authorization": fmt.Sprintf("MediaBrowser Token=\"%s\"", ctx.String("token"))},
+	config := &api.Configuration{
+		Servers: api.ServerConfigurations{
+			{URL: ctx.String("url")},
+		},
+		DefaultHeader: map[string]string{
+			"Authorization": fmt.Sprintf("MediaBrowser Token=\"%s\"", ctx.String("token")),
+		},
 	}
-	client := jellyapi.NewAPIClient(config)
+	client := api.NewAPIClient(config)
 
 	ctrl := controller.New(context.Background(), client)
 	return fn(ctrl)
 }
 
-var itemTypesFlags = []cli.Flag{
-	&cli.BoolFlag{
-		Name:  "movies",
-		Value: true,
-		Usage: "show unscraped movies",
-	},
-	&cli.BoolFlag{
-		Name:  "shows",
-		Value: true,
-		Usage: "show unscraped shows",
-	},
-	&cli.BoolFlag{
-		Name:  "seasons",
-		Value: false,
-		Usage: "show unscraped seasons",
-	},
-	&cli.BoolFlag{
-		Name:  "episodes",
-		Value: false,
-		Usage: "show unscraped episodes",
+var itemTypesFlag = &cli.StringSliceFlag{
+	Name:  "types",
+	Value: cli.NewStringSlice("Movie", "Series"),
+	Usage: "filter media types",
+	Action: func(ctx *cli.Context, types []string) error {
+		for _, t := range types {
+			_, err := api.NewBaseItemKindFromValue(t)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	},
 }

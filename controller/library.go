@@ -11,27 +11,18 @@ func (c *Controller) LibraryScan() error {
 	return err
 }
 
-func (c *Controller) LibraryUnscraped(movies, series, seasons, episodes bool) error {
+func (c *Controller) LibraryUnscraped(types []string) error {
 	// Determine based on missing production date
 	// TODO: look for a better endpoints/approach.
 
-	var types []api.BaseItemKind
-	if movies {
-		types = append(types, api.BASEITEMKIND_MOVIE)
-	}
-	if series {
-		types = append(types, api.BASEITEMKIND_SERIES)
-	}
-	if seasons {
-		types = append(types, api.BASEITEMKIND_SEASON)
-	}
-	if episodes {
-		types = append(types, api.BASEITEMKIND_EPISODE)
+	var t []api.BaseItemKind
+	for _, ty := range types {
+		t = append(t, api.BaseItemKind(ty))
 	}
 
 	result, _, err := c.client.ItemsAPI.GetItems(c.ctx).
 		Recursive(true).
-		IncludeItemTypes(types).
+		IncludeItemTypes(t).
 		Filters([]api.ItemFilter{api.ITEMFILTER_IS_NOT_FOLDER}).
 		Execute()
 	if err != nil {
@@ -46,24 +37,15 @@ func (c *Controller) LibraryUnscraped(movies, series, seasons, episodes bool) er
 	return err
 }
 
-func (c *Controller) LibrarySearch(term string, movies, series, seasons, episodes bool) error {
-	var types []api.BaseItemKind
-	if movies {
-		types = append(types, api.BASEITEMKIND_MOVIE)
-	}
-	if series {
-		types = append(types, api.BASEITEMKIND_SERIES)
-	}
-	if seasons {
-		types = append(types, api.BASEITEMKIND_SEASON)
-	}
-	if episodes {
-		types = append(types, api.BASEITEMKIND_EPISODE)
+func (c *Controller) LibrarySearch(term string, types []string) error {
+	var t []api.BaseItemKind
+	for _, ty := range types {
+		t = append(t, api.BaseItemKind(ty))
 	}
 
 	results, _, err := c.client.ItemsAPI.GetItems(c.ctx).
 		SearchTerm(term).
-		IncludeItemTypes(types).
+		IncludeItemTypes(t).
 		Recursive(true).
 		Execute()
 	if err != nil {
