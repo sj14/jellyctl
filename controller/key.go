@@ -1,11 +1,15 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
 
 func (c *Controller) KeyCreate(app string) error {
+	if app == "" {
+		return errors.New("missing app name")
+	}
 	_, err := c.client.ApiKeyAPI.CreateKey(c.ctx).App(app).Execute()
 	return err
 }
