@@ -15,6 +15,9 @@ func (c *Controller) KeyCreate(app string) error {
 }
 
 func (c *Controller) KeyDelete(key string) error {
+	if key == "" {
+		return errors.New("missing token")
+	}
 	_, err := c.client.ApiKeyAPI.RevokeKey(c.ctx, key).Execute()
 	return err
 }
