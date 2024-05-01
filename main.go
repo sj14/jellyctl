@@ -72,6 +72,7 @@ func main() {
 						Timezone: time.Local,
 						Value:    cli.NewTimestamp(time.Time{}),
 					},
+					jsonFlag,
 				},
 				Action: func(ctx *cli.Context) error {
 					return Exec(ctx, func(ctrl *controller.Controller) error {
@@ -79,6 +80,7 @@ func main() {
 							int32(ctx.Int("start")),
 							int32(ctx.Int("limit")),
 							*ctx.Timestamp("after"),
+							ctx.Bool("json"),
 						)
 					})
 				},
@@ -226,9 +228,14 @@ func main() {
 					{
 						Name:  "list",
 						Usage: "Shows users",
+						Flags: []cli.Flag{
+							jsonFlag,
+						},
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
-								return ctrl.UserList()
+								return ctrl.UserList(
+									ctx.Bool("json"),
+								)
 							})
 						},
 					},
@@ -252,11 +259,13 @@ func main() {
 						Usage: "List entries which were not scraped",
 						Flags: []cli.Flag{
 							itemTypesFlag,
+							jsonFlag,
 						},
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.LibraryUnscraped(
 									ctx.StringSlice("types"),
+									ctx.Bool("json"),
 								)
 							})
 						},
@@ -268,12 +277,14 @@ func main() {
 						ArgsUsage: " <TERM>",
 						Flags: []cli.Flag{
 							itemTypesFlag,
+							jsonFlag,
 						},
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.LibrarySearch(
 									ctx.Args().Get(0),
 									ctx.StringSlice("types"),
+									ctx.Bool("json"),
 								)
 							})
 						},
@@ -287,9 +298,14 @@ func main() {
 					{
 						Name:  "list",
 						Usage: "Show keys",
+						Flags: []cli.Flag{
+							jsonFlag,
+						},
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
-								return ctrl.KeyList()
+								return ctrl.KeyList(
+									ctx.Bool("json"),
+								)
 							})
 						},
 					},
@@ -312,6 +328,52 @@ func main() {
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.KeyDelete(ctx.Args().Get(0))
+							})
+						},
+					},
+				},
+			},
+			{
+				Name:  "task",
+				Usage: "Manage schedule tasks",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "list",
+						Usage: "Show tasks",
+						Flags: []cli.Flag{
+							jsonFlag,
+						},
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.TaskList(
+									ctx.Bool("json"),
+								)
+							})
+						},
+					},
+					{
+						Name:      "start",
+						Usage:     "Start task",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.TaskStart(
+									ctx.Args().Get(0),
+								)
+							})
+						},
+					},
+					{
+						Name:      "stop",
+						Usage:     "Stop task",
+						Args:      true,
+						ArgsUsage: " <ID>",
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.TaskStop(
+									ctx.Args().Get(0),
+								)
 							})
 						},
 					},
@@ -340,17 +402,23 @@ func Exec(ctx *cli.Context, fn func(ctrl *controller.Controller) error) error {
 	return fn(ctrl)
 }
 
-var itemTypesFlag = &cli.StringSliceFlag{
-	Name:  "types",
-	Value: cli.NewStringSlice("Movie", "Series"),
-	Usage: "filter media types",
-	Action: func(ctx *cli.Context, types []string) error {
-		for _, t := range types {
-			_, err := api.NewBaseItemKindFromValue(t)
-			if err != nil {
-				return err
+var (
+	itemTypesFlag = &cli.StringSliceFlag{
+		Name:  "types",
+		Value: cli.NewStringSlice("Movie", "Series"),
+		Usage: "filter media types",
+		Action: func(ctx *cli.Context, types []string) error {
+			for _, t := range types {
+				_, err := api.NewBaseItemKindFromValue(t)
+				if err != nil {
+					return err
+				}
 			}
-		}
-		return nil
-	},
-}
+			return nil
+		},
+	}
+	jsonFlag = &cli.BoolFlag{
+		Name:  "json",
+		Usage: "print output as JSON",
+	}
+)

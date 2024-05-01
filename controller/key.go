@@ -15,10 +15,15 @@ func (c *Controller) KeyDelete(key string) error {
 	return err
 }
 
-func (c *Controller) KeyList() error {
+func (c *Controller) KeyList(json bool) error {
 	result, _, err := c.client.ApiKeyAPI.GetKeys(c.ctx).Execute()
 	if err != nil {
 		return err
+	}
+
+	if json {
+		printAsJSON(result)
+		return nil
 	}
 
 	fmt.Printf("Token                             Created               Name\n")

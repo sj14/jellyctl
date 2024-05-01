@@ -11,7 +11,7 @@ func (c *Controller) LibraryScan() error {
 	return err
 }
 
-func (c *Controller) LibraryUnscraped(types []string) error {
+func (c *Controller) LibraryUnscraped(types []string, json bool) error {
 	// Determine based on missing production date
 	// TODO: look for a better endpoints/approach.
 
@@ -29,6 +29,11 @@ func (c *Controller) LibraryUnscraped(types []string) error {
 		return err
 	}
 
+	if json {
+		printAsJSON(result)
+		return nil
+	}
+
 	for _, item := range result.Items {
 		if !item.ProductionYear.IsSet() {
 			fmt.Printf("(%s) %s\n", item.GetType(), item.GetName())
@@ -37,7 +42,7 @@ func (c *Controller) LibraryUnscraped(types []string) error {
 	return err
 }
 
-func (c *Controller) LibrarySearch(term string, types []string) error {
+func (c *Controller) LibrarySearch(term string, types []string, json bool) error {
 	var t []api.BaseItemKind
 	for _, ty := range types {
 		t = append(t, api.BaseItemKind(ty))
@@ -50,6 +55,11 @@ func (c *Controller) LibrarySearch(term string, types []string) error {
 		Execute()
 	if err != nil {
 		return err
+	}
+
+	if json {
+		printAsJSON(results)
+		return nil
 	}
 
 	for _, result := range results.Items {

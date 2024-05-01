@@ -28,10 +28,15 @@ func (c *Controller) UserDel(userID string) error {
 	return err
 }
 
-func (c *Controller) UserList() error {
+func (c *Controller) UserList(json bool) error {
 	users, _, err := c.client.UserAPI.GetUsers(c.ctx).Execute()
 	if err != nil {
 		return err
+	}
+
+	if json {
+		printAsJSON(users)
+		return nil
 	}
 
 	fmt.Printf("ID                                Admin   Disabled   Last Active       Name\n")

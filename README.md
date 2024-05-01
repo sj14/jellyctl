@@ -44,6 +44,7 @@ COMMANDS:
    user      Manage users
    library   Manage media libraries
    key       Manage API keys
+   task      Manage schedule tasks
    help, h   Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
