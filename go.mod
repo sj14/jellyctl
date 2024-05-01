@@ -3,7 +3,7 @@ module github.com/sj14/jellyctl
 go 1.22.2
 
 require (
-	github.com/sj14/jellyfin-go v0.0.0-20240417141508-99ccc56e75dd
+	github.com/sj14/jellyfin-go v0.1.0
 	github.com/urfave/cli/v2 v2.27.2
 )
 
