@@ -39,10 +39,12 @@ func main() {
 				EnvVars: []string{"JELLYCTL_TOKEN"},
 				Usage:   "API token",
 			},
-			&cli.BoolFlag{
+		},
+		Commands: []*cli.Command{
+			{
 				Name:   "docs",
 				Hidden: true,
-				Action: func(ctx *cli.Context, b bool) error {
+				Action: func(ctx *cli.Context) error {
 					s, err := ctx.App.ToMarkdown()
 					if err != nil {
 						return err
@@ -50,8 +52,6 @@ func main() {
 					return os.WriteFile("DOCS.md", []byte(s), os.ModePerm)
 				},
 			},
-		},
-		Commands: []*cli.Command{
 			{
 				Name:  "activity",
 				Usage: "List activities",
@@ -250,31 +250,28 @@ func main() {
 					{
 						Name:  "unscraped",
 						Usage: "List entries which were not scraped",
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:  "movies",
-								Value: true,
-								Usage: "show unscraped movies",
-							},
-							&cli.BoolFlag{
-								Name:  "shows",
-								Value: true,
-								Usage: "show unscraped shows",
-							},
-							&cli.BoolFlag{
-								Name:  "seasons",
-								Value: false,
-								Usage: "show unscraped seasons",
-							},
-							&cli.BoolFlag{
-								Name:  "episodes",
-								Value: false,
-								Usage: "show unscraped episodes",
-							},
-						},
+						Flags: itemTypesFlags,
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.LibraryUnscraped(
+									ctx.Bool("movies"),
+									ctx.Bool("shows"),
+									ctx.Bool("seasons"),
+									ctx.Bool("episodes"),
+								)
+							})
+						},
+					},
+					{
+						Name:      "search",
+						Usage:     "Search throught the library",
+						Args:      true,
+						ArgsUsage: " <TERM>",
+						Flags:     itemTypesFlags,
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.LibrarySearch(
+									ctx.Args().Get(0),
 									ctx.Bool("movies"),
 									ctx.Bool("shows"),
 									ctx.Bool("seasons"),
@@ -339,4 +336,27 @@ func Exec(ctx *cli.Context, fn func(ctrl *controller.Controller) error) error {
 
 	ctrl := controller.New(context.Background(), client)
 	return fn(ctrl)
+}
+
+var itemTypesFlags = []cli.Flag{
+	&cli.BoolFlag{
+		Name:  "movies",
+		Value: true,
+		Usage: "show unscraped movies",
+	},
+	&cli.BoolFlag{
+		Name:  "shows",
+		Value: true,
+		Usage: "show unscraped shows",
+	},
+	&cli.BoolFlag{
+		Name:  "seasons",
+		Value: false,
+		Usage: "show unscraped seasons",
+	},
+	&cli.BoolFlag{
+		Name:  "episodes",
+		Value: false,
+		Usage: "show unscraped episodes",
+	},
 }

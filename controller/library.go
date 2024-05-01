@@ -11,7 +11,7 @@ func (c *Controller) LibraryScan() error {
 	return err
 }
 
-func (c *Controller) LibraryUnscraped(movies, series, season, episode bool) error {
+func (c *Controller) LibraryUnscraped(movies, series, seasons, episodes bool) error {
 	// Determine based on missing production date
 	// TODO: look for a better endpoints/approach.
 
@@ -22,10 +22,10 @@ func (c *Controller) LibraryUnscraped(movies, series, season, episode bool) erro
 	if series {
 		types = append(types, api.BASEITEMKIND_SERIES)
 	}
-	if season {
+	if seasons {
 		types = append(types, api.BASEITEMKIND_SEASON)
 	}
-	if episode {
+	if episodes {
 		types = append(types, api.BASEITEMKIND_EPISODE)
 	}
 
@@ -44,4 +44,34 @@ func (c *Controller) LibraryUnscraped(movies, series, season, episode bool) erro
 		}
 	}
 	return err
+}
+
+func (c *Controller) LibrarySearch(term string, movies, series, seasons, episodes bool) error {
+	var types []api.BaseItemKind
+	if movies {
+		types = append(types, api.BASEITEMKIND_MOVIE)
+	}
+	if series {
+		types = append(types, api.BASEITEMKIND_SERIES)
+	}
+	if seasons {
+		types = append(types, api.BASEITEMKIND_SEASON)
+	}
+	if episodes {
+		types = append(types, api.BASEITEMKIND_EPISODE)
+	}
+
+	results, _, err := c.client.ItemsAPI.GetItems(c.ctx).
+		SearchTerm(term).
+		IncludeItemTypes(types).
+		Recursive(true).
+		Execute()
+	if err != nil {
+		return err
+	}
+
+	for _, result := range results.Items {
+		fmt.Printf("(%s) %s (%d)\n", result.GetType(), result.GetName(), result.GetProductionYear())
+	}
+	return nil
 }

@@ -120,6 +120,18 @@ List entries which were not scraped
 
 **--shows**: show unscraped shows
 
+### search
+
+Search throught the library
+
+**--episodes**: show unscraped episodes
+
+**--movies**: show unscraped movies
+
+**--seasons**: show unscraped seasons
+
+**--shows**: show unscraped shows
+
 ## key
 
 Manage API keys
