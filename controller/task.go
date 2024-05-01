@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -40,11 +41,17 @@ func (c *Controller) TaskList(json bool) error {
 }
 
 func (c *Controller) TaskStart(id string) error {
+	if id == "" {
+		return errors.New("missing ID")
+	}
 	_, err := c.client.ScheduledTasksAPI.StartTask(c.ctx, id).Execute()
 	return err
 }
 
 func (c *Controller) TaskStop(id string) error {
+	if id == "" {
+		return errors.New("missing ID")
+	}
 	_, err := c.client.ScheduledTasksAPI.StopTask(c.ctx, id).Execute()
 	return err
 }
