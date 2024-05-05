@@ -129,12 +129,36 @@ func main() {
 						},
 					},
 					{
-						Name:   "backup",
-						Usage:  "Backup some data",
-						Hidden: true, // EXPERIMENTAL
+						Name:  "backup",
+						Usage: "Export some data (EXPERIMENTAL)",
 						Action: func(ctx *cli.Context) error {
 							return Exec(ctx, func(ctrl *controller.Controller) error {
 								return ctrl.SystemBackup()
+							})
+						},
+					},
+					{
+						Name:      "restore",
+						Usage:     "Import media played and favourites (EXPERIMENTAL)",
+						Args:      true,
+						ArgsUsage: " <PATH>",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "unplay",
+								Usage: "mark media as unplayed when this is the backup state",
+							},
+							&cli.BoolFlag{
+								Name:  "unfav",
+								Usage: "unfavorite media when this is the backup state",
+							},
+						},
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.SystemRestore(
+									ctx.Args().Get(0),
+									ctx.Bool("unplay"),
+									ctx.Bool("unfav"),
+								)
 							})
 						},
 					},

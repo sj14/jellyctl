@@ -2,10 +2,13 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/sj14/jellyfin-go/api"
 )
 
 func (c *Controller) GetSystemInfo() error {
@@ -72,7 +75,7 @@ func (c *Controller) SystemBackup() error {
 			return err
 		}
 
-		b, err = json.Marshal(items)
+		b, err = json.Marshal(items.Items)
 		if err != nil {
 			return err
 		}
@@ -86,9 +89,83 @@ func (c *Controller) SystemBackup() error {
 	return nil
 }
 
-func (c *Controller) SystemRestore(backupDir string) error {
-	// TODO: Playlists
-	// c.client.PlaystateAPI.MarkPlayedItem(c.ctx, "TODO", "TODO").DatePlayed(time.Time{}).Execute()
-	// c.client.UserLibraryAPI.MarkFavoriteItem(c.ctx, "TODO", "TODO").Execute()
+func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error {
+	if backupDir == "" {
+		return errors.New("missing path to the backup directory")
+	}
+	// TODO:
+	// - Complete user restore
+	// - Playlists
+
+	userdir := filepath.Join(backupDir, "users")
+	entries, err := os.ReadDir(userdir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		userID := entry.Name()
+
+		itemsPath := filepath.Join(userdir, userID, "items.json")
+
+		itemsJson, err := os.ReadFile(itemsPath)
+		if err != nil {
+			return err
+		}
+
+		var items []api.BaseItemDto
+		err = json.Unmarshal(itemsJson, &items)
+		if err != nil {
+			return err
+		}
+
+		for _, item := range items {
+			if played, ok := item.UserData.Get().GetPlayedOk(); ok {
+				if *played {
+					_, _, err = c.client.PlaystateAPI.MarkPlayedItem(
+						c.ctx,
+						userID,
+						item.GetId()).
+						DatePlayed(item.UserData.Get().GetLastPlayedDate()).
+						Execute()
+					if err != nil {
+						return err
+					}
+				} else if unplayed {
+					_, _, err = c.client.PlaystateAPI.MarkUnplayedItem(
+						c.ctx,
+						userID,
+						item.GetId()).
+						Execute()
+					if err != nil {
+						return err
+					}
+				}
+
+				if fav, ok := item.UserData.Get().GetIsFavoriteOk(); ok {
+					if *fav {
+						_, _, err = c.client.UserLibraryAPI.MarkFavoriteItem(
+							c.ctx,
+							userID,
+							item.GetId()).
+							Execute()
+						if err != nil {
+							return err
+						}
+					} else if unfav {
+						_, _, err = c.client.UserLibraryAPI.UnmarkFavoriteItem(
+							c.ctx,
+							userID,
+							item.GetId()).
+							Execute()
+						if err != nil {
+							return err
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return nil
 }

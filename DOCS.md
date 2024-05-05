@@ -62,6 +62,18 @@ Shows system information
 
 **--public**: show public info which won't need a token
 
+### backup
+
+Export some data (EXPERIMENTAL)
+
+### restore
+
+Import media played and favourites (EXPERIMENTAL)
+
+**--unfav**: unfavorite media when this is the backup state
+
+**--unplay**: mark media as unplayed when this is the backup state
+
 ## user
 
 Manage users
