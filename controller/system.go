@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"time"
@@ -104,6 +105,37 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 	}
 
 	users, _, err := c.client.UserAPI.GetUsers(c.ctx).Execute()
+	if err != nil {
+		return err
+	}
+
+	var backupUsernames []string
+	for _, dirEntry := range dirEntries {
+		backupUsernames = append(backupUsernames, dirEntry.Name())
+	}
+
+	// create missing users
+	// TODO: use user.json from backup for settings (e.g. admin, hidden, disabled, ...)
+	for _, backupUser := range backupUsernames {
+		found := false
+		for _, systemUser := range users {
+			if systemUser.GetName() == backupUser {
+				found = true
+				break
+			}
+		}
+		if !found {
+			pass := fmt.Sprint(rand.Int())
+			fmt.Printf("creating new user %q with (unsafe) password %q\n", backupUser, pass)
+			err := c.UserAdd(backupUser, pass)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// reload users as missing ones might have been created
+	users, _, err = c.client.UserAPI.GetUsers(c.ctx).Execute()
 	if err != nil {
 		return err
 	}
