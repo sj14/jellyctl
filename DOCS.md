@@ -68,7 +68,7 @@ Export some data (EXPERIMENTAL)
 
 ### restore
 
-Import media played and favourites (EXPERIMENTAL)
+Import played and favourite information (based on the user name not user ID!) (EXPERIMENTAL)
 
 **--unfav**: unfavorite media when this is the backup state
 

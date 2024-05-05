@@ -139,7 +139,7 @@ func main() {
 					},
 					{
 						Name:      "restore",
-						Usage:     "Import media played and favourites (EXPERIMENTAL)",
+						Usage:     "Import played and favourite information (based on the user name not user ID!) (EXPERIMENTAL)",
 						Args:      true,
 						ArgsUsage: " <PATH>",
 						Flags: []cli.Flag{

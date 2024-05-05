@@ -50,7 +50,7 @@ func (c *Controller) SystemBackup() error {
 	basedir := filepath.Join("jellyctl-backup", fmt.Sprint(time.Now().Unix()))
 
 	for _, user := range users {
-		userdir := filepath.Join(basedir, "users", user.GetId())
+		userdir := filepath.Join(basedir, "users", user.GetName())
 		err = os.MkdirAll(userdir, os.ModePerm)
 		if err != nil {
 			return err
@@ -89,77 +89,88 @@ func (c *Controller) SystemBackup() error {
 	return nil
 }
 
+// TODO:
+// - Complete user restore
+// - Playlists
 func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error {
 	if backupDir == "" {
 		return errors.New("missing path to the backup directory")
 	}
-	// TODO:
-	// - Complete user restore
-	// - Playlists
 
 	userdir := filepath.Join(backupDir, "users")
-	entries, err := os.ReadDir(userdir)
+	dirEntries, err := os.ReadDir(userdir)
 	if err != nil {
 		return err
 	}
 
-	for _, entry := range entries {
-		userID := entry.Name()
+	users, _, err := c.client.UserAPI.GetUsers(c.ctx).Execute()
+	if err != nil {
+		return err
+	}
 
-		itemsPath := filepath.Join(userdir, userID, "items.json")
+	for _, dirEntry := range dirEntries {
+		userName := dirEntry.Name()
 
-		itemsJson, err := os.ReadFile(itemsPath)
-		if err != nil {
-			return err
-		}
+		for _, user := range users {
+			if user.GetName() != userName {
+				continue
+			}
 
-		var items []api.BaseItemDto
-		err = json.Unmarshal(itemsJson, &items)
-		if err != nil {
-			return err
-		}
+			fmt.Printf("restoring data for %q\n", user.GetName())
 
-		for _, item := range items {
-			if played, ok := item.UserData.Get().GetPlayedOk(); ok {
-				if *played {
-					_, _, err = c.client.PlaystateAPI.MarkPlayedItem(
-						c.ctx,
-						userID,
-						item.GetId()).
-						DatePlayed(item.UserData.Get().GetLastPlayedDate()).
-						Execute()
-					if err != nil {
-						return err
-					}
-				} else if unplayed {
-					_, _, err = c.client.PlaystateAPI.MarkUnplayedItem(
-						c.ctx,
-						userID,
-						item.GetId()).
-						Execute()
-					if err != nil {
-						return err
-					}
-				}
+			itemsJson, err := os.ReadFile(filepath.Join(userdir, userName, "items.json"))
+			if err != nil {
+				return err
+			}
 
-				if fav, ok := item.UserData.Get().GetIsFavoriteOk(); ok {
-					if *fav {
-						_, _, err = c.client.UserLibraryAPI.MarkFavoriteItem(
+			var items []api.BaseItemDto
+			err = json.Unmarshal(itemsJson, &items)
+			if err != nil {
+				return err
+			}
+
+			for _, item := range items {
+				if played, ok := item.UserData.Get().GetPlayedOk(); ok {
+					if *played {
+						_, _, err = c.client.PlaystateAPI.MarkPlayedItem(
 							c.ctx,
-							userID,
+							user.GetId(),
+							item.GetId()).
+							DatePlayed(item.UserData.Get().GetLastPlayedDate()).
+							Execute()
+						if err != nil {
+							return err
+						}
+					} else if unplayed {
+						_, _, err = c.client.PlaystateAPI.MarkUnplayedItem(
+							c.ctx,
+							user.GetId(),
 							item.GetId()).
 							Execute()
 						if err != nil {
 							return err
 						}
-					} else if unfav {
-						_, _, err = c.client.UserLibraryAPI.UnmarkFavoriteItem(
-							c.ctx,
-							userID,
-							item.GetId()).
-							Execute()
-						if err != nil {
-							return err
+					}
+
+					if fav, ok := item.UserData.Get().GetIsFavoriteOk(); ok {
+						if *fav {
+							_, _, err = c.client.UserLibraryAPI.MarkFavoriteItem(
+								c.ctx,
+								user.GetId(),
+								item.GetId()).
+								Execute()
+							if err != nil {
+								return err
+							}
+						} else if unfav {
+							_, _, err = c.client.UserLibraryAPI.UnmarkFavoriteItem(
+								c.ctx,
+								user.GetId(),
+								item.GetId()).
+								Execute()
+							if err != nil {
+								return err
+							}
 						}
 					}
 				}
