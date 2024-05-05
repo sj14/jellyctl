@@ -128,6 +128,16 @@ func main() {
 							}
 						},
 					},
+					{
+						Name:   "backup",
+						Usage:  "Backup some data",
+						Hidden: true, // EXPERIMENTAL
+						Action: func(ctx *cli.Context) error {
+							return Exec(ctx, func(ctrl *controller.Controller) error {
+								return ctrl.SystemBackup()
+							})
+						},
+					},
 				},
 			},
 			{
