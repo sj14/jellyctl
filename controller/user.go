@@ -13,7 +13,7 @@ func (c *Controller) UserAdd(name, password string) error {
 		return errors.New("empty name or password")
 	}
 
-	user := api.CreateUserByName{Name: *api.NewNullableString(&name), Password: *api.NewNullableString(&password)}
+	user := api.CreateUserByName{Name: name, Password: *api.NewNullableString(&password)}
 
 	_, _, err := c.client.UserAPI.CreateUserByName(c.ctx).CreateUserByName(user).Execute()
 	return err

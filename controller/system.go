@@ -166,8 +166,8 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 					if *played {
 						_, _, err = c.client.PlaystateAPI.MarkPlayedItem(
 							c.ctx,
-							user.GetId(),
 							item.GetId()).
+							UserId(user.GetId()).
 							DatePlayed(item.UserData.Get().GetLastPlayedDate()).
 							Execute()
 						if err != nil {
@@ -176,8 +176,8 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 					} else if unplayed {
 						_, _, err = c.client.PlaystateAPI.MarkUnplayedItem(
 							c.ctx,
-							user.GetId(),
 							item.GetId()).
+							UserId(user.GetId()).
 							Execute()
 						if err != nil {
 							return err
@@ -188,8 +188,8 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 						if *fav {
 							_, _, err = c.client.UserLibraryAPI.MarkFavoriteItem(
 								c.ctx,
-								user.GetId(),
 								item.GetId()).
+								UserId(user.GetId()).
 								Execute()
 							if err != nil {
 								return err
@@ -197,8 +197,8 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 						} else if unfav {
 							_, _, err = c.client.UserLibraryAPI.UnmarkFavoriteItem(
 								c.ctx,
-								user.GetId(),
 								item.GetId()).
+								UserId(user.GetId()).
 								Execute()
 							if err != nil {
 								return err
