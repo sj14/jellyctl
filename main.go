@@ -452,7 +452,8 @@ var (
 		},
 	}
 	jsonFlag = &cli.BoolFlag{
-		Name:  "json",
-		Usage: "print output as JSON",
+		Name:    "json",
+		Aliases: []string{"j"},
+		Usage:   "print output as JSON",
 	}
 )

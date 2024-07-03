@@ -57,7 +57,7 @@ func (c *Controller) SystemBackup() error {
 			return err
 		}
 
-		b, err := json.Marshal(user)
+		b, err := json.MarshalIndent(user, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (c *Controller) SystemBackup() error {
 			return err
 		}
 
-		b, err = json.Marshal(items.Items)
+		b, err = json.MarshalIndent(items.Items, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -134,7 +134,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 		}
 	}
 
-	// reload users as missing ones might have been created
+	// reload users as missing ones might have been just created
 	users, _, err = c.client.UserAPI.GetUsers(c.ctx).Execute()
 	if err != nil {
 		return err
@@ -173,6 +173,19 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 						if err != nil {
 							return err
 						}
+
+						// TODO: probably not the right API, where to set the user ID?
+						// Check model_playback_progress_info_item.go / UserData NullableBaseItemDtoUserData
+						//
+						// _, err = c.client.PlaystateAPI.ReportPlaybackProgress(c.ctx).
+						// 	PlaybackProgressInfo(api.PlaybackProgressInfo{
+						// 		ItemId:        item.Id,
+						// 		PositionTicks: *api.NewNullableInt64(item.GetUserData().PlaybackPositionTicks),
+						// 	},
+						// 	).Execute()
+						// if err != nil {
+						// 	return err
+						// }
 					} else if unplayed {
 						_, _, err = c.client.PlaystateAPI.MarkUnplayedItem(
 							c.ctx,
