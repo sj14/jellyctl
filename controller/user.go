@@ -66,7 +66,7 @@ func (c *Controller) userUpdatePolicy(userID string, policy api.UserPolicy) erro
 	return err
 }
 
-func (c *Controller) UserPolicy(userID string) (*api.UserDtoPolicy, error) {
+func (c *Controller) UserPolicy(userID string) (*api.UserPolicy, error) {
 	user, _, err := c.client.UserAPI.GetUserById(c.ctx, userID).Execute()
 	if err != nil {
 		return nil, fmt.Errorf("failed getting user: %w", err)
