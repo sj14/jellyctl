@@ -20,7 +20,7 @@ func (c *Controller) LibraryUnscraped(types []string, json bool) error {
 		t = append(t, api.BaseItemKind(ty))
 	}
 
-	result, _, err := c.client.ItemsAPI.GetItems(c.ctx).
+	allItems, _, err := c.client.ItemsAPI.GetItems(c.ctx).
 		Recursive(true).
 		IncludeItemTypes(t).
 		Filters([]api.ItemFilter{api.ITEMFILTER_IS_NOT_FOLDER}).
@@ -29,16 +29,21 @@ func (c *Controller) LibraryUnscraped(types []string, json bool) error {
 		return err
 	}
 
-	if json {
-		printAsJSON(result)
-		return nil
-	}
-
-	for _, item := range result.Items {
+	var jsonResult []api.BaseItemDto
+	for _, item := range allItems.Items {
 		if !item.ProductionYear.IsSet() || !item.CommunityRating.IsSet() {
+			if json {
+				jsonResult = append(jsonResult, item)
+				continue
+			}
 			fmt.Printf("(%s) %s\n", item.GetType(), item.GetName())
 		}
 	}
+
+	if json {
+		printAsJSON(jsonResult)
+	}
+
 	return err
 }
 
