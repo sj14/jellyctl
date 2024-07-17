@@ -12,7 +12,7 @@ func (c *Controller) LibraryScan() error {
 }
 
 func (c *Controller) LibraryUnscraped(types []string, json bool) error {
-	// Determine based on missing production date
+	// Determine based on missing production date or missing community rating
 	// TODO: look for a better endpoints/approach.
 
 	var t []api.BaseItemKind
@@ -35,7 +35,7 @@ func (c *Controller) LibraryUnscraped(types []string, json bool) error {
 	}
 
 	for _, item := range result.Items {
-		if !item.ProductionYear.IsSet() {
+		if !item.ProductionYear.IsSet() || !item.CommunityRating.IsSet() {
 			fmt.Printf("(%s) %s\n", item.GetType(), item.GetName())
 		}
 	}
