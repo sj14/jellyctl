@@ -42,6 +42,17 @@ func (c *Controller) SystemRestart() error {
 	return err
 }
 
+type playlistBackup struct {
+	PlaylistID   string
+	PlaylistName string
+	Items        []NameID
+}
+
+type NameID struct {
+	Name string
+	ID   string
+}
+
 func (c *Controller) SystemBackup() error {
 	users, _, err := c.client.UserAPI.GetUsers(c.ctx).Execute()
 	if err != nil {
@@ -72,6 +83,45 @@ func (c *Controller) SystemBackup() error {
 			Recursive(true).
 			UserId(user.GetId()). //  needed for getting the userData (favorite, played)
 			Execute()
+		if err != nil {
+			return err
+		}
+
+		var playlists []playlistBackup
+		for _, item := range items.Items {
+			// If item is a playlist, get all items of the playlist.
+			// Otherwise, we won't have a link between playlist and its content.
+			if item.GetType() == api.BASEITEMKIND_PLAYLIST {
+				playlistItems, _, err := c.client.PlaylistsAPI.GetPlaylistItems(c.ctx, item.GetId()).
+					EnableUserData(false).
+					UserId(user.GetId()).
+					Execute()
+				if err != nil {
+					return err
+				}
+
+				backup := playlistBackup{
+					PlaylistID:   item.GetId(),
+					PlaylistName: item.GetName(),
+				}
+
+				for _, playlistItem := range playlistItems.GetItems() {
+					backup.Items = append(backup.Items, NameID{
+						Name: playlistItem.GetName(),
+						ID:   playlistItem.GetId(),
+					})
+				}
+
+				playlists = append(playlists, backup)
+			}
+		}
+
+		b, err = json.MarshalIndent(playlists, "", "  ")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(userdir, "playlists.json"), b, os.ModePerm)
 		if err != nil {
 			return err
 		}
