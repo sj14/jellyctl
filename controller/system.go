@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/sj14/jellyfin-go/api"
@@ -169,7 +171,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 	for _, backupUser := range backupUsernames {
 		found := false
 		for _, systemUser := range users {
-			if systemUser.GetName() == backupUser {
+			if strings.EqualFold(systemUser.GetName(), backupUser) {
 				found = true
 				break
 			}
@@ -179,7 +181,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 			fmt.Printf("creating new user %q with (unsafe) password %q\n", backupUser, pass)
 			err := c.UserAdd(backupUser, pass)
 			if err != nil {
-				return err
+				return fmt.Errorf("add user: %w", err)
 			}
 		}
 	}
@@ -194,7 +196,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 		userName := dirEntry.Name()
 
 		for _, user := range users {
-			if user.GetName() != userName {
+			if !strings.EqualFold(user.GetName(), userName) {
 				continue
 			}
 
@@ -202,26 +204,39 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 
 			itemsJson, err := os.ReadFile(filepath.Join(userdir, userName, "items.json"))
 			if err != nil {
-				return err
+				return fmt.Errorf("read items.json: %w", err)
 			}
 
 			var items []api.BaseItemDto
 			err = json.Unmarshal(itemsJson, &items)
 			if err != nil {
-				return err
+				return fmt.Errorf("unmarshal items.json: %w", err)
 			}
 
-			for _, item := range items {
-				if played, ok := item.UserData.Get().GetPlayedOk(); ok {
+			for _, backupItem := range items {
+				// We have to find the same item on the server again, as the IDs won't match when the server changed.
+				serverItems, _, err := c.client.ItemsAPI.GetItems(c.ctx).NameStartsWithOrGreater(backupItem.GetName()).Execute()
+				if err != nil {
+					return fmt.Errorf("get server item: %w", err)
+				}
+
+				if len(serverItems.Items) != 1 {
+					continue
+				}
+
+				serverItem := serverItems.Items[0]
+
+				if played, ok := backupItem.UserData.Get().GetPlayedOk(); ok {
 					if *played {
 						_, _, err = c.client.PlaystateAPI.MarkPlayedItem(
 							c.ctx,
-							item.GetId()).
+							serverItem.GetId(),
+						).
 							UserId(user.GetId()).
-							DatePlayed(item.UserData.Get().GetLastPlayedDate()).
+							DatePlayed(backupItem.UserData.Get().GetLastPlayedDate()).
 							Execute()
 						if err != nil {
-							return err
+							return fmt.Errorf("mark played item: %w", err)
 						}
 
 						// TODO: probably not the right API, where to set the user ID?
@@ -239,33 +254,37 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 					} else if unplayed {
 						_, _, err = c.client.PlaystateAPI.MarkUnplayedItem(
 							c.ctx,
-							item.GetId()).
+							serverItem.GetId(),
+						).
 							UserId(user.GetId()).
 							Execute()
 						if err != nil {
 							return err
 						}
 					}
+				}
 
-					if fav, ok := item.UserData.Get().GetIsFavoriteOk(); ok {
-						if *fav {
-							_, _, err = c.client.UserLibraryAPI.MarkFavoriteItem(
-								c.ctx,
-								item.GetId()).
-								UserId(user.GetId()).
-								Execute()
-							if err != nil {
-								return err
-							}
-						} else if unfav {
-							_, _, err = c.client.UserLibraryAPI.UnmarkFavoriteItem(
-								c.ctx,
-								item.GetId()).
-								UserId(user.GetId()).
-								Execute()
-							if err != nil {
-								return err
-							}
+				if fav, ok := backupItem.UserData.Get().GetIsFavoriteOk(); ok {
+					if *fav {
+						log.Printf("REMOVE ME: is fav: %s\n", backupItem.GetName())
+						_, _, err = c.client.UserLibraryAPI.MarkFavoriteItem(
+							c.ctx,
+							serverItem.GetId(),
+						).
+							UserId(user.GetId()).
+							Execute()
+						if err != nil {
+							return fmt.Errorf("mark favourite item: %w", err)
+						}
+					} else if unfav {
+						_, _, err = c.client.UserLibraryAPI.UnmarkFavoriteItem(
+							c.ctx,
+							serverItem.GetId(),
+						).
+							UserId(user.GetId()).
+							Execute()
+						if err != nil {
+							return fmt.Errorf("unmark favourite item: %w", err)
 						}
 					}
 				}
