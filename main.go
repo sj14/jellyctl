@@ -328,6 +328,25 @@ var app = &cli.App{
 						})
 					},
 				},
+				{
+					Name:      "duplicates",
+					Usage:     "List duplicates in the library",
+					Args:      true,
+					ArgsUsage: " <TERM>",
+					Flags: []cli.Flag{
+						itemTypesFlag,
+						jsonFlag,
+					},
+					Action: func(ctx *cli.Context) error {
+						return Exec(ctx, func(ctrl *controller.Controller) error {
+							return ctrl.LibraryDuplicates(
+								ctx.Args().Get(0),
+								ctx.StringSlice("types"),
+								ctx.Bool("json"),
+							)
+						})
+					},
+				},
 			},
 		},
 		{

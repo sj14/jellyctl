@@ -72,3 +72,57 @@ func (c *Controller) LibrarySearch(term string, types []string, json bool) error
 	}
 	return nil
 }
+
+func (c *Controller) LibraryDuplicates(term string, types []string, json bool) error {
+	var t []api.BaseItemKind
+	for _, ty := range types {
+		t = append(t, api.BaseItemKind(ty))
+	}
+
+	response, _, err := c.client.ItemsAPI.GetItems(c.ctx).
+		SearchTerm(term).
+		IncludeItemTypes(t).
+		Recursive(true).
+		Execute()
+	if err != nil {
+		return err
+	}
+
+	var result []api.BaseItemDto
+
+	for idx1, item1 := range response.Items {
+		for idx2, item2 := range response.Items {
+			if idx1 == idx2 {
+				// Do not compare exactly the same entry.
+				continue
+			}
+
+			// Check if we have a duplicate.
+			if item1.GetName() == item2.GetName() && item1.GetProductionYear() == item2.GetProductionYear() {
+				found := false
+				for _, r := range result {
+					// Only add the duplicate to the result list when the same entry is not already listed.
+					if r.GetName() == item1.GetName() && r.GetProductionYear() == item1.GetProductionYear() {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					result = append(result, item1)
+				}
+			}
+		}
+	}
+
+	if json {
+		printAsJSON(result)
+		return nil
+	}
+
+	for _, item := range result {
+		fmt.Printf("(%s) %s (%d)\n", item.GetType(), item.GetName(), item.GetProductionYear())
+	}
+
+	return nil
+}
