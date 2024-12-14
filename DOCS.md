@@ -38,7 +38,7 @@ List activities
 
 **--after**="": only logs after the given time (default: 0001-01-01 00:00:00 +0000 UTC)
 
-**--json**: print output as JSON
+**--json, -j**: print output as JSON
 
 **--limit**="": limit the output logs (default: 15)
 
@@ -114,7 +114,7 @@ Expose user on login page
 
 Shows users
 
-**--json**: print output as JSON
+**--json, -j**: print output as JSON
 
 ## library
 
@@ -128,7 +128,7 @@ Trigger a rescan of all libraries
 
 List entries which were not scraped
 
-**--json**: print output as JSON
+**--json, -j**: print output as JSON
 
 **--types**="": filter media types (default: "Movie", "Series")
 
@@ -136,7 +136,15 @@ List entries which were not scraped
 
 Search throught the library
 
-**--json**: print output as JSON
+**--json, -j**: print output as JSON
+
+**--types**="": filter media types (default: "Movie", "Series")
+
+### duplicates
+
+List duplicates in the library
+
+**--json, -j**: print output as JSON
 
 **--types**="": filter media types (default: "Movie", "Series")
 
@@ -148,7 +156,7 @@ Manage API keys
 
 Show keys
 
-**--json**: print output as JSON
+**--json, -j**: print output as JSON
 
 ### create
 
@@ -166,7 +174,7 @@ Manage schedule tasks
 
 Show tasks
 
-**--json**: print output as JSON
+**--json, -j**: print output as JSON
 
 ### start
 
