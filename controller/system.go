@@ -83,6 +83,7 @@ func (c *Controller) SystemBackup() error {
 		items, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
 			SearchTerm("").
 			Recursive(true).
+			Fields([]api.ItemFields{api.ITEMFIELDS_PROVIDER_IDS}).
 			UserId(user.GetId())) // needed for getting the userData (favorite, played)
 		if err != nil {
 			return err
@@ -190,6 +191,18 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 		return err
 	}
 
+	serverItems, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
+		Recursive(true).
+		Fields([]api.ItemFields{api.ITEMFIELDS_PROVIDER_IDS}))
+	if err != nil {
+		return fmt.Errorf("get server items: %w", err)
+	}
+	itemsByName := make(map[string][]api.BaseItemDto)
+	for _, item := range serverItems.Items {
+		itemsByName[item.GetName()] = append(itemsByName[item.GetName()], item)
+	}
+
+	unmatched := 0
 	for _, dirEntry := range dirEntries {
 		userName := dirEntry.Name()
 
@@ -213,26 +226,33 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 
 			for _, backupItem := range items {
 				// We have to find the same item on the server again, as the IDs won't match when the server changed.
-				serverItems, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
-					NameStartsWithOrGreater(backupItem.GetName()))
-				if err != nil {
-					return fmt.Errorf("get server item: %w", err)
+				if backupItem.GetName() == "" {
+					fmt.Printf("skipping item with empty name for user %q\n", userName)
+					unmatched++
+					continue
 				}
-
-				if len(serverItems.Items) != 1 {
+				serverItem, matches := findRestoreItem(backupItem, itemsByName[backupItem.GetName()])
+				if serverItem == nil {
+					fmt.Printf("skipping %q (%s) for user %q: %d exact matches\n", backupItem.GetName(), backupItem.GetType(), userName, matches)
+					unmatched++
 					continue
 				}
 
-				serverItem := serverItems.Items[0]
+				userData := backupItem.UserData.Get()
+				if userData == nil {
+					fmt.Printf("skipping %q (%s) for user %q: no user data in backup\n", backupItem.GetName(), backupItem.GetType(), userName)
+					unmatched++
+					continue
+				}
 
-				if played, ok := backupItem.UserData.Get().GetPlayedOk(); ok {
+				if played, ok := userData.GetPlayedOk(); ok {
 					if *played {
 						_, _, err = c.client.UserDataAPI.MarkPlayedItem(
 							c.ctx,
 							serverItem.GetId(),
 						).
 							UserId(user.GetId()).
-							DatePlayed(backupItem.UserData.Get().GetLastPlayedDate()).
+							DatePlayed(userData.GetLastPlayedDate()).
 							Execute()
 						if err != nil {
 							return fmt.Errorf("mark played item: %w", err)
@@ -263,7 +283,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 					}
 				}
 
-				if fav, ok := backupItem.UserData.Get().GetIsFavoriteOk(); ok {
+				if fav, ok := userData.GetIsFavoriteOk(); ok {
 					if *fav {
 						log.Printf("REMOVE ME: is fav: %s\n", backupItem.GetName())
 						_, _, err = c.client.UserDataAPI.MarkFavoriteItem(
@@ -291,5 +311,8 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 		}
 	}
 
+	if unmatched > 0 {
+		return fmt.Errorf("restore incomplete: %d items could not be matched or had no user data", unmatched)
+	}
 	return nil
 }
