@@ -72,11 +72,10 @@ func (c *Controller) UserPolicy(userID string) (*api.UserPolicy, error) {
 		return nil, fmt.Errorf("failed getting user: %w", err)
 	}
 
-	p := user.Policy.Get()
-
-	setZeroValue(p)
-
-	return p, nil
+	if user == nil || user.Policy.Get() == nil {
+		return nil, fmt.Errorf("user %q has no policy", userID)
+	}
+	return user.Policy.Get(), nil
 }
 
 func (c *Controller) UserEnable(userID string) error {
