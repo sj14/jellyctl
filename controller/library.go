@@ -20,11 +20,10 @@ func (c *Controller) LibraryUnscraped(types []string, json bool) error {
 		t = append(t, api.BaseItemKind(ty))
 	}
 
-	allItems, _, err := c.client.LibraryAPI.GetItems(c.ctx).
+	allItems, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
 		Recursive(true).
 		IncludeItemTypes(t).
-		Filters([]api.ItemFilter{api.ITEMFILTER_IS_NOT_FOLDER}).
-		Execute()
+		Filters([]api.ItemFilter{api.ITEMFILTER_IS_NOT_FOLDER}))
 	if err != nil {
 		return err
 	}
@@ -53,11 +52,10 @@ func (c *Controller) LibrarySearch(term string, types []string, json bool) error
 		t = append(t, api.BaseItemKind(ty))
 	}
 
-	results, _, err := c.client.LibraryAPI.GetItems(c.ctx).
+	results, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
 		SearchTerm(term).
 		IncludeItemTypes(t).
-		Recursive(true).
-		Execute()
+		Recursive(true))
 	if err != nil {
 		return err
 	}
@@ -79,11 +77,10 @@ func (c *Controller) LibraryDuplicates(term string, types []string, json bool) e
 		t = append(t, api.BaseItemKind(ty))
 	}
 
-	response, _, err := c.client.LibraryAPI.GetItems(c.ctx).
+	response, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
 		SearchTerm(term).
 		IncludeItemTypes(t).
-		Recursive(true).
-		Execute()
+		Recursive(true))
 	if err != nil {
 		return err
 	}

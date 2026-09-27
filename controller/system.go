@@ -80,11 +80,10 @@ func (c *Controller) SystemBackup() error {
 			return err
 		}
 
-		items, _, err := c.client.LibraryAPI.GetItems(c.ctx).
+		items, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
 			SearchTerm("").
 			Recursive(true).
-			UserId(user.GetId()). //  needed for getting the userData (favorite, played)
-			Execute()
+			UserId(user.GetId())) // needed for getting the userData (favorite, played)
 		if err != nil {
 			return err
 		}
@@ -94,10 +93,9 @@ func (c *Controller) SystemBackup() error {
 			// If item is a playlist, get all items of the playlist.
 			// Otherwise, we won't have a link between playlist and its content.
 			if item.GetType() == api.BASEITEMKIND_PLAYLIST {
-				playlistItems, _, err := c.client.PlaylistAPI.GetPlaylistItems(c.ctx, item.GetId()).
+				playlistItems, err := getAllRequestItems(c.client.PlaylistAPI.GetPlaylistItems(c.ctx, item.GetId()).
 					EnableUserData(false).
-					UserId(user.GetId()).
-					Execute()
+					UserId(user.GetId()))
 				if err != nil {
 					return err
 				}
@@ -215,7 +213,8 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 
 			for _, backupItem := range items {
 				// We have to find the same item on the server again, as the IDs won't match when the server changed.
-				serverItems, _, err := c.client.LibraryAPI.GetItems(c.ctx).NameStartsWithOrGreater(backupItem.GetName()).Execute()
+				serverItems, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
+					NameStartsWithOrGreater(backupItem.GetName()))
 				if err != nil {
 					return fmt.Errorf("get server item: %w", err)
 				}

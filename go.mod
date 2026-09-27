@@ -1,6 +1,6 @@
 module github.com/sj14/jellyctl
 
-go 1.24.4
+go 1.27.1
 
 require (
 	github.com/sj14/jellyfin-go v0.5.0
