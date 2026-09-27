@@ -74,12 +74,19 @@ func TestSystemRestoreUsesOnlyUniqueExactMatch(t *testing.T) {
 			if err := os.MkdirAll(userDir, 0700); err != nil {
 				t.Fatal(err)
 			}
-			backup := `[{"Name":"Pilot","Type":"Episode","ProductionYear":2020,"UserData":{"Key":"pilot","Played":true}}]`
+			backup := `[{"Name":"Pilot","Type":"Episode","ProductionYear":2020,"UserData":{"Key":"pilot","Played":true,"PlaybackPositionTicks":123}}]`
 			if err := os.WriteFile(filepath.Join(userDir, "items.json"), []byte(backup), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(userDir, "user.json"), []byte(`{"Name":"alice"}`), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(userDir, "playlists.json"), []byte(`[]`), 0600); err != nil {
 				t.Fatal(err)
 			}
 
 			var played []string
+			var progress []string
 			itemsRequests := 0
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -94,6 +101,19 @@ func TestSystemRestoreUsesOnlyUniqueExactMatch(t *testing.T) {
 					_, _ = w.Write([]byte(`{"Items":` + tt.candidates + `,"TotalRecordCount":2}`))
 				case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/UserPlayedItems/"):
 					played = append(played, strings.TrimPrefix(r.URL.Path, "/UserPlayedItems/"))
+					_, _ = w.Write([]byte(`{"Key":"pilot"}`))
+				case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/UserItems/") && strings.HasSuffix(r.URL.Path, "/UserData"):
+					if r.URL.Query().Get("userId") != "user" {
+						t.Errorf("progress userId = %q", r.URL.Query().Get("userId"))
+					}
+					var body struct{ PlaybackPositionTicks int64 }
+					if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+						t.Errorf("decode progress: %v", err)
+					}
+					if body.PlaybackPositionTicks != 123 {
+						t.Errorf("progress ticks = %d", body.PlaybackPositionTicks)
+					}
+					progress = append(progress, strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/UserItems/"), "/UserData"))
 					_, _ = w.Write([]byte(`{"Key":"pilot"}`))
 				default:
 					http.NotFound(w, r)
@@ -116,6 +136,9 @@ func TestSystemRestoreUsesOnlyUniqueExactMatch(t *testing.T) {
 			}
 			if !reflect.DeepEqual(played, wantPlayed) {
 				t.Fatalf("played IDs = %v, want %v", played, wantPlayed)
+			}
+			if !reflect.DeepEqual(progress, wantPlayed) {
+				t.Fatalf("progress IDs = %v, want %v", progress, wantPlayed)
 			}
 			if itemsRequests != 1 {
 				t.Errorf("library fetched %d times, want once", itemsRequests)

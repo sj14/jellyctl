@@ -146,7 +146,7 @@ var app = &cli.Command{
 				},
 				{
 					Name:      "restore",
-					Usage:     "Import played and favourite information (based on the user name not user ID!) (EXPERIMENTAL)",
+					Usage:     "Restore users, play state and playlists from a jellyctl backup (EXPERIMENTAL)",
 					ArgsUsage: "<PATH>",
 					Flags: []cli.Flag{
 						&cli.BoolFlag{

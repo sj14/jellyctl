@@ -100,7 +100,7 @@ Shows a list of commands or help for one command
 
 ### restore
 
-Import played and favourite information (based on the user name not user ID!) (EXPERIMENTAL)
+Restore users, play state and playlists from a jellyctl backup (EXPERIMENTAL)
 
 **--help, -h**: show help
 

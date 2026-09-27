@@ -1,11 +1,10 @@
 package controller
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strings"
@@ -48,6 +47,13 @@ type playlistBackup struct {
 	PlaylistID   string
 	PlaylistName string
 	Items        []NameID
+	IsPublic     *bool
+	Users        []playlistUserBackup
+}
+
+type playlistUserBackup struct {
+	Name    string
+	CanEdit *bool
 }
 
 type NameID struct {
@@ -59,6 +65,10 @@ func (c *Controller) SystemBackup() error {
 	users, _, err := c.client.UserAPI.GetUsers(c.ctx).Execute()
 	if err != nil {
 		return err
+	}
+	userNamesByID := make(map[string]string, len(users))
+	for _, user := range users {
+		userNamesByID[user.GetId()] = user.GetName()
 	}
 
 	basedir := filepath.Join("jellyctl-backup", fmt.Sprint(time.Now().Unix()))
@@ -84,6 +94,7 @@ func (c *Controller) SystemBackup() error {
 			SearchTerm("").
 			Recursive(true).
 			Fields([]api.ItemFields{api.ITEMFIELDS_PROVIDER_IDS}).
+			EnableUserData(true).
 			UserId(user.GetId())) // needed for getting the userData (favorite, played)
 		if err != nil {
 			return err
@@ -104,6 +115,22 @@ func (c *Controller) SystemBackup() error {
 				backup := playlistBackup{
 					PlaylistID:   item.GetId(),
 					PlaylistName: item.GetName(),
+				}
+				playlistInfo, _, err := c.client.PlaylistAPI.GetPlaylist(c.ctx, item.GetId()).Execute()
+				if err != nil {
+					return fmt.Errorf("get playlist %q: %w", item.GetName(), err)
+				}
+				if playlistInfo == nil {
+					return fmt.Errorf("get playlist %q: server returned no details", item.GetName())
+				}
+				backup.IsPublic = playlistInfo.OpenAccess
+				backup.Users = make([]playlistUserBackup, 0, len(playlistInfo.Shares))
+				for _, permission := range playlistInfo.Shares {
+					name := userNamesByID[permission.GetUserId()]
+					if name == "" {
+						return fmt.Errorf("playlist %q refers to unknown user %q", item.GetName(), permission.GetUserId())
+					}
+					backup.Users = append(backup.Users, playlistUserBackup{Name: name, CanEdit: permission.CanEdit})
 				}
 
 				for _, playlistItem := range playlistItems.GetItems() {
@@ -141,9 +168,6 @@ func (c *Controller) SystemBackup() error {
 	return nil
 }
 
-// TODO:
-// - Complete user restore
-// - Playlists
 func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error {
 	if backupDir == "" {
 		return errors.New("missing path to the backup directory")
@@ -162,11 +186,13 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 
 	var backupUsernames []string
 	for _, dirEntry := range dirEntries {
+		if !dirEntry.IsDir() {
+			return fmt.Errorf("unexpected file %q in backup users directory", dirEntry.Name())
+		}
 		backupUsernames = append(backupUsernames, dirEntry.Name())
 	}
 
-	// create missing users
-	// TODO: use user.json from backup for settings (e.g. admin, hidden, disabled, ...)
+	// Create missing users before restoring their settings and item data.
 	for _, backupUser := range backupUsernames {
 		found := false
 		for _, systemUser := range users {
@@ -176,8 +202,8 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 			}
 		}
 		if !found {
-			pass := fmt.Sprint(rand.Int())
-			fmt.Printf("creating new user %q with (unsafe) password %q\n", backupUser, pass)
+			pass := rand.Text()
+			fmt.Printf("creating new user %q with temporary password %q\n", backupUser, pass)
 			err := c.UserAdd(backupUser, pass)
 			if err != nil {
 				return fmt.Errorf("add user: %w", err)
@@ -189,6 +215,10 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 	users, _, err = c.client.UserAPI.GetUsers(c.ctx).Execute()
 	if err != nil {
 		return err
+	}
+	userIDsByName := make(map[string]string, len(users))
+	for _, user := range users {
+		userIDsByName[strings.ToLower(user.GetName())] = user.GetId()
 	}
 
 	serverItems, err := getAllRequestItems(c.client.LibraryAPI.GetItems(c.ctx).
@@ -203,15 +233,21 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 	}
 
 	unmatched := 0
+	restoredPlaylists := make(map[string]string)
 	for _, dirEntry := range dirEntries {
 		userName := dirEntry.Name()
+		foundUser := false
 
 		for _, user := range users {
 			if !strings.EqualFold(user.GetName(), userName) {
 				continue
 			}
+			foundUser = true
 
 			fmt.Printf("restoring data for %q\n", user.GetName())
+			if err := c.restoreUserSettings(user.GetId(), userName, filepath.Join(userdir, userName, "user.json")); err != nil {
+				return fmt.Errorf("restore settings for %q: %w", userName, err)
+			}
 
 			itemsJson, err := os.ReadFile(filepath.Join(userdir, userName, "items.json"))
 			if err != nil {
@@ -223,8 +259,17 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 			if err != nil {
 				return fmt.Errorf("unmarshal items.json: %w", err)
 			}
+			backupItemsByID := make(map[string]api.BaseItemDto, len(items))
+			for _, item := range items {
+				if item.GetId() != "" {
+					backupItemsByID[item.GetId()] = item
+				}
+			}
 
 			for _, backupItem := range items {
+				if backupItem.GetType() == api.BASEITEMKIND_PLAYLIST {
+					continue // Playlists and their contents are restored below.
+				}
 				// We have to find the same item on the server again, as the IDs won't match when the server changed.
 				if backupItem.GetName() == "" {
 					fmt.Printf("skipping item with empty name for user %q\n", userName)
@@ -258,18 +303,6 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 							return fmt.Errorf("mark played item: %w", err)
 						}
 
-						// TODO: probably not the right API, where to set the user ID?
-						// Check model_playback_progress_info_item.go / UserData NullableBaseItemDtoUserData
-						//
-						// _, err = c.client.SessionAPI.ReportPlaybackProgress(c.ctx).
-						// 	PlaybackProgressInfo(api.PlaybackProgressInfo{
-						// 		ItemId:        item.Id,
-						// 		PositionTicks: *api.NewNullableInt64(item.GetUserData().PlaybackPositionTicks),
-						// 	},
-						// 	).Execute()
-						// if err != nil {
-						// 	return err
-						// }
 					} else if unplayed {
 						_, _, err = c.client.UserDataAPI.MarkUnplayedItem(
 							c.ctx,
@@ -285,7 +318,6 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 
 				if fav, ok := userData.GetIsFavoriteOk(); ok {
 					if *fav {
-						log.Printf("REMOVE ME: is fav: %s\n", backupItem.GetName())
 						_, _, err = c.client.UserDataAPI.MarkFavoriteItem(
 							c.ctx,
 							serverItem.GetId(),
@@ -307,12 +339,33 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 						}
 					}
 				}
+
+				if ticks := userData.GetPlaybackPositionTicks(); ticks > 0 {
+					progress := api.NewUpdateUserItemDataDto()
+					progress.SetPlaybackPositionTicks(ticks)
+					_, _, err = c.client.UserDataAPI.UpdateItemUserData(c.ctx, serverItem.GetId()).
+						UserId(user.GetId()).
+						UpdateUserItemDataDto(*progress).
+						Execute()
+					if err != nil {
+						return fmt.Errorf("restore playback position for %q: %w", backupItem.GetName(), err)
+					}
+				}
 			}
+			skippedPlaylists, err := c.restorePlaylists(filepath.Join(userdir, userName, "playlists.json"), user.GetId(), backupItemsByID, itemsByName, userIDsByName, restoredPlaylists)
+			if err != nil {
+				return fmt.Errorf("restore playlists for %q: %w", userName, err)
+			}
+			unmatched += skippedPlaylists
+			break
+		}
+		if !foundUser {
+			return fmt.Errorf("user %q was not returned after creation", userName)
 		}
 	}
 
 	if unmatched > 0 {
-		return fmt.Errorf("restore incomplete: %d items could not be matched or had no user data", unmatched)
+		return fmt.Errorf("restore incomplete: %d items or playlists could not be restored", unmatched)
 	}
 	return nil
 }

@@ -55,3 +55,9 @@ GLOBAL OPTIONS:
 ```
 
 Generate an API token in the Jellyfin WebUI at Administration -> Overview -> Advanced -> API Token.
+
+## Backup and restore
+
+Run `jellyctl system backup` to save users, watch state, and playlists in `jellyctl-backup/<timestamp>`. Restore them with `jellyctl system restore <directory>`.
+
+Restore is experimental. Passwords are not backed up; newly created users receive a temporary password printed during restore. Unmatched items are reported and cause a nonzero exit. Playlist ownership may change. On Jellyfin 10.11.4, [playback positions may be assigned to the wrong user](https://github.com/jellyfin/jellyfin/issues/15733).
