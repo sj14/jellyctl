@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Controller) TaskList(json bool) error {
-	result, _, err := c.client.ScheduledTasksAPI.GetTasks(c.ctx).Execute()
+	result, _, err := c.client.ScheduledTaskAPI.GetTasks(c.ctx).Execute()
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (c *Controller) TaskStart(id string) error {
 	if id == "" {
 		return errors.New("missing ID")
 	}
-	_, err := c.client.ScheduledTasksAPI.StartTask(c.ctx, id).Execute()
+	_, err := c.client.ScheduledTaskAPI.StartTask(c.ctx, id).Execute()
 	return err
 }
 
@@ -52,6 +52,6 @@ func (c *Controller) TaskStop(id string) error {
 	if id == "" {
 		return errors.New("missing ID")
 	}
-	_, err := c.client.ScheduledTasksAPI.StopTask(c.ctx, id).Execute()
+	_, err := c.client.ScheduledTaskAPI.StopTask(c.ctx, id).Execute()
 	return err
 }

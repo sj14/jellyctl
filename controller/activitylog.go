@@ -6,7 +6,7 @@ import (
 )
 
 func (c *Controller) GetLogEntries(startIdx, limit int32, minDate time.Time, json bool) error {
-	result, _, err := c.client.ActivityLogAPI.GetLogEntries(c.ctx).
+	result, _, err := c.client.SystemAPI.GetLogEntries(c.ctx).
 		StartIndex(startIdx).
 		MinDate(minDate).
 		Limit(limit).

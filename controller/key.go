@@ -10,7 +10,7 @@ func (c *Controller) KeyCreate(app string) error {
 	if app == "" {
 		return errors.New("missing app name")
 	}
-	_, err := c.client.ApiKeyAPI.CreateKey(c.ctx).App(app).Execute()
+	_, err := c.client.AuthenticationAPI.CreateKey(c.ctx).App(app).Execute()
 	return err
 }
 
@@ -18,12 +18,12 @@ func (c *Controller) KeyDelete(key string) error {
 	if key == "" {
 		return errors.New("missing token")
 	}
-	_, err := c.client.ApiKeyAPI.RevokeKey(c.ctx, key).Execute()
+	_, err := c.client.AuthenticationAPI.RevokeKey(c.ctx, key).Execute()
 	return err
 }
 
 func (c *Controller) KeyList(json bool) error {
-	result, _, err := c.client.ApiKeyAPI.GetKeys(c.ctx).Execute()
+	result, _, err := c.client.AuthenticationAPI.GetKeys(c.ctx).Execute()
 	if err != nil {
 		return err
 	}

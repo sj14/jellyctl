@@ -25,7 +25,7 @@ jellyctl [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 
 **--token**="": API token
 
-**--url**="": URL of the Jellyfin server (default: http://127.0.0.1:8096)
+**--url**="": URL of the Jellyfin server (default: "http://127.0.0.1:8096")
 
 **--version, -v**: print the version
 
@@ -36,7 +36,7 @@ jellyctl [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 
 List activities
 
-**--after**="": only logs after the given time (default: 0001-01-01 00:00:00 +0000 UTC)
+**--after**="": only logs after the given time
 
 **--help, -h**: show help
 
@@ -242,7 +242,7 @@ List entries which were not scraped
 
 **--json, -j**: print output as JSON
 
-**--types**="": filter media types (default: [Movie Series])
+**--types**="": filter media types (default: "Movie", "Series")
 
 #### help, h
 
@@ -256,7 +256,7 @@ Search throught the library
 
 **--json, -j**: print output as JSON
 
-**--types**="": filter media types (default: [Movie Series])
+**--types**="": filter media types (default: "Movie", "Series")
 
 #### help, h
 
@@ -270,7 +270,7 @@ List duplicates in the library
 
 **--json, -j**: print output as JSON
 
-**--types**="": filter media types (default: [Movie Series])
+**--types**="": filter media types (default: "Movie", "Series")
 
 #### help, h
 

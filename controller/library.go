@@ -20,7 +20,7 @@ func (c *Controller) LibraryUnscraped(types []string, json bool) error {
 		t = append(t, api.BaseItemKind(ty))
 	}
 
-	allItems, _, err := c.client.ItemsAPI.GetItems(c.ctx).
+	allItems, _, err := c.client.LibraryAPI.GetItems(c.ctx).
 		Recursive(true).
 		IncludeItemTypes(t).
 		Filters([]api.ItemFilter{api.ITEMFILTER_IS_NOT_FOLDER}).
@@ -53,7 +53,7 @@ func (c *Controller) LibrarySearch(term string, types []string, json bool) error
 		t = append(t, api.BaseItemKind(ty))
 	}
 
-	results, _, err := c.client.ItemsAPI.GetItems(c.ctx).
+	results, _, err := c.client.LibraryAPI.GetItems(c.ctx).
 		SearchTerm(term).
 		IncludeItemTypes(t).
 		Recursive(true).
@@ -79,7 +79,7 @@ func (c *Controller) LibraryDuplicates(term string, types []string, json bool) e
 		t = append(t, api.BaseItemKind(ty))
 	}
 
-	response, _, err := c.client.ItemsAPI.GetItems(c.ctx).
+	response, _, err := c.client.LibraryAPI.GetItems(c.ctx).
 		SearchTerm(term).
 		IncludeItemTypes(t).
 		Recursive(true).

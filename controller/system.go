@@ -80,7 +80,7 @@ func (c *Controller) SystemBackup() error {
 			return err
 		}
 
-		items, _, err := c.client.ItemsAPI.GetItems(c.ctx).
+		items, _, err := c.client.LibraryAPI.GetItems(c.ctx).
 			SearchTerm("").
 			Recursive(true).
 			UserId(user.GetId()). //  needed for getting the userData (favorite, played)
@@ -94,7 +94,7 @@ func (c *Controller) SystemBackup() error {
 			// If item is a playlist, get all items of the playlist.
 			// Otherwise, we won't have a link between playlist and its content.
 			if item.GetType() == api.BASEITEMKIND_PLAYLIST {
-				playlistItems, _, err := c.client.PlaylistsAPI.GetPlaylistItems(c.ctx, item.GetId()).
+				playlistItems, _, err := c.client.PlaylistAPI.GetPlaylistItems(c.ctx, item.GetId()).
 					EnableUserData(false).
 					UserId(user.GetId()).
 					Execute()
@@ -215,7 +215,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 
 			for _, backupItem := range items {
 				// We have to find the same item on the server again, as the IDs won't match when the server changed.
-				serverItems, _, err := c.client.ItemsAPI.GetItems(c.ctx).NameStartsWithOrGreater(backupItem.GetName()).Execute()
+				serverItems, _, err := c.client.LibraryAPI.GetItems(c.ctx).NameStartsWithOrGreater(backupItem.GetName()).Execute()
 				if err != nil {
 					return fmt.Errorf("get server item: %w", err)
 				}
@@ -228,7 +228,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 
 				if played, ok := backupItem.UserData.Get().GetPlayedOk(); ok {
 					if *played {
-						_, _, err = c.client.PlaystateAPI.MarkPlayedItem(
+						_, _, err = c.client.UserDataAPI.MarkPlayedItem(
 							c.ctx,
 							serverItem.GetId(),
 						).
@@ -242,7 +242,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 						// TODO: probably not the right API, where to set the user ID?
 						// Check model_playback_progress_info_item.go / UserData NullableBaseItemDtoUserData
 						//
-						// _, err = c.client.PlaystateAPI.ReportPlaybackProgress(c.ctx).
+						// _, err = c.client.SessionAPI.ReportPlaybackProgress(c.ctx).
 						// 	PlaybackProgressInfo(api.PlaybackProgressInfo{
 						// 		ItemId:        item.Id,
 						// 		PositionTicks: *api.NewNullableInt64(item.GetUserData().PlaybackPositionTicks),
@@ -252,7 +252,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 						// 	return err
 						// }
 					} else if unplayed {
-						_, _, err = c.client.PlaystateAPI.MarkUnplayedItem(
+						_, _, err = c.client.UserDataAPI.MarkUnplayedItem(
 							c.ctx,
 							serverItem.GetId(),
 						).
@@ -267,7 +267,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 				if fav, ok := backupItem.UserData.Get().GetIsFavoriteOk(); ok {
 					if *fav {
 						log.Printf("REMOVE ME: is fav: %s\n", backupItem.GetName())
-						_, _, err = c.client.UserLibraryAPI.MarkFavoriteItem(
+						_, _, err = c.client.UserDataAPI.MarkFavoriteItem(
 							c.ctx,
 							serverItem.GetId(),
 						).
@@ -277,7 +277,7 @@ func (c *Controller) SystemRestore(backupDir string, unplayed, unfav bool) error
 							return fmt.Errorf("mark favourite item: %w", err)
 						}
 					} else if unfav {
-						_, _, err = c.client.UserLibraryAPI.UnmarkFavoriteItem(
+						_, _, err = c.client.UserDataAPI.UnmarkFavoriteItem(
 							c.ctx,
 							serverItem.GetId(),
 						).
