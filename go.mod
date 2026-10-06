@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	github.com/sj14/jellyfin-go v0.5.0
 	github.com/urfave/cli-docs/v3 v3.1.0
-	github.com/urfave/cli/v3 v3.13.0
+	github.com/urfave/cli/v3 v3.14.0
 )
 
 require (
